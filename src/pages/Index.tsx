@@ -13,30 +13,22 @@ const supabase = createClient(
   import.meta.env.VITE_SUPABASE_ANON_KEY
 );
 
-const Index = () => {
+interface IndexProps {
+  initialUser: any;
+}
+
+const Index = ({ initialUser }: IndexProps) => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<any>(initialUser);
 
   useEffect(() => {
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-    });
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
+    setUser(initialUser);
+  }, [initialUser]);
 
   const handlePrevMonth = () => {
     setCurrentDate(
@@ -69,6 +61,7 @@ const Index = () => {
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
+    setUser(null);
   };
 
   return (
