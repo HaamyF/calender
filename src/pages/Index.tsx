@@ -1,20 +1,50 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { CalendarHeader } from "@/components/CalendarHeader";
 import { CalendarGrid } from "@/components/CalendarGrid";
 import { EventDialog, CalendarEvent } from "@/components/EventDialog";
+import { AuthDialog } from "@/components/AuthDialog";
+import { Button } from "@/components/ui/button";
+import { createClient } from "@supabase/supabase-js";
+
+const supabase = createClient(
+  import.meta.env.VITE_SUPABASE_URL,
+  import.meta.env.VITE_SUPABASE_ANON_KEY
+);
 
 const Index = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+
+  useEffect(() => {
+    // Check for existing session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for auth changes
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handlePrevMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1));
+    setCurrentDate(
+      new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
+    );
   };
 
   const handleNextMonth = () => {
-    setCurrentDate(new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1));
+    setCurrentDate(
+      new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
+    );
   };
 
   const handleTodayClick = () => {
@@ -22,6 +52,10 @@ const Index = () => {
   };
 
   const handleDateClick = (date: Date) => {
+    if (!user) {
+      setIsAuthDialogOpen(true);
+      return;
+    }
     setSelectedDate(date);
     setIsEventDialogOpen(true);
   };
@@ -30,14 +64,34 @@ const Index = () => {
     setEvents([...events, event]);
   };
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+  };
+
   return (
     <div className="container mx-auto py-10">
-      <CalendarHeader
-        currentDate={currentDate}
-        onPrevMonth={handlePrevMonth}
-        onNextMonth={handleNextMonth}
-        onTodayClick={handleTodayClick}
-      />
+      <div className="flex justify-between items-center mb-6">
+        <CalendarHeader
+          currentDate={currentDate}
+          onPrevMonth={handlePrevMonth}
+          onNextMonth={handleNextMonth}
+          onTodayClick={handleTodayClick}
+        />
+        <div>
+          {user ? (
+            <div className="flex items-center gap-4">
+              <span className="text-sm text-gray-600">{user.email}</span>
+              <Button variant="outline" onClick={handleSignOut}>
+                Sign Out
+              </Button>
+            </div>
+          ) : (
+            <Button onClick={() => setIsAuthDialogOpen(true)}>
+              Login / Sign Up
+            </Button>
+          )}
+        </div>
+      </div>
       <div className="mt-4">
         <CalendarGrid
           currentDate={currentDate}
@@ -50,6 +104,10 @@ const Index = () => {
         onClose={() => setIsEventDialogOpen(false)}
         onSave={handleSaveEvent}
         selectedDate={selectedDate}
+      />
+      <AuthDialog
+        isOpen={isAuthDialogOpen}
+        onClose={() => setIsAuthDialogOpen(false)}
       />
     </div>
   );
