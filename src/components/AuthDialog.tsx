@@ -6,8 +6,8 @@ import { useToast } from "@/hooks/use-toast";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
+  "https://your-project-url.supabase.co",  // Replace with your Supabase project URL
+  "your-anon-key"  // Replace with your Supabase anon key
 );
 
 export const AuthDialog = ({
