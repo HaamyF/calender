@@ -3,7 +3,9 @@ import { CalendarHeader } from "@/components/CalendarHeader";
 import { CalendarGrid } from "@/components/CalendarGrid";
 import { EventDialog, CalendarEvent } from "@/components/EventDialog";
 import { AuthDialog } from "@/components/AuthDialog";
+import { SettingsDialog } from "@/components/SettingsDialog";
 import { Button } from "@/components/ui/button";
+import { Settings } from "lucide-react";
 import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
@@ -17,6 +19,7 @@ const Index = () => {
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [isAuthDialogOpen, setIsAuthDialogOpen] = useState(false);
+  const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
   const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
@@ -77,14 +80,21 @@ const Index = () => {
           onNextMonth={handleNextMonth}
           onTodayClick={handleTodayClick}
         />
-        <div>
+        <div className="flex items-center gap-4">
           {user ? (
-            <div className="flex items-center gap-4">
+            <>
               <span className="text-sm text-gray-600">{user.email}</span>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsSettingsDialogOpen(true)}
+              >
+                <Settings className="h-5 w-5" />
+              </Button>
               <Button variant="outline" onClick={handleSignOut}>
                 Sign Out
               </Button>
-            </div>
+            </>
           ) : (
             <Button onClick={() => setIsAuthDialogOpen(true)}>
               Login / Sign Up
@@ -108,6 +118,10 @@ const Index = () => {
       <AuthDialog
         isOpen={isAuthDialogOpen}
         onClose={() => setIsAuthDialogOpen(false)}
+      />
+      <SettingsDialog
+        isOpen={isSettingsDialogOpen}
+        onClose={() => setIsSettingsDialogOpen(false)}
       />
     </div>
   );
